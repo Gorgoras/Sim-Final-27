@@ -8,10 +8,11 @@ namespace Sim_Final_27.Generadores
 {
     class randomGenerator
     {
-    
+        static int seed = 1;
         public static double generarRandom()
         {
-            Random rnd = new Random();
+            Random rnd = new Random(seed);
+            seed++;
             rnd.NextDouble();
             rnd.NextDouble();
             rnd.NextDouble();
@@ -19,16 +20,16 @@ namespace Sim_Final_27.Generadores
             return ret;
         }
 
-        public static double generarTiempoExponencial(double rnd)
+        public static double generarTiempoExponencial(double rnd, double mediaExp)
         {
-            double tiempo = -(0.01) * Math.Log(1-rnd);
+            double tiempo = -(mediaExp) * Math.Log(1-rnd);
             return tiempo;
         }
 
-        public static double generarTiempoDistNormal (double rnd1, double rnd2)
+        public static double generarTiempoDistNormal (double rnd1, double rnd2, double mediaNormal, double desvEstNormal)
         {
             double z = Math.Sqrt(-2 * Math.Log(rnd1)) * Math.Cos(2 * Math.PI * rnd2);
-            double tiempo = 0.08 + 0.01 * z;
+            double tiempo = mediaNormal + desvEstNormal * z;
             return tiempo;
         }
 

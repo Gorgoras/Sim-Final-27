@@ -34,6 +34,11 @@ namespace Sim_Final_27
         private DataTable tablaSim;
         private DataTable tablaObjTemp;
 
+        //Parametros modificables
+        private double mediaExponencial;
+        private double mediaNormal;
+        private double desvEstNormal;
+
 
         public Form1()
         {
@@ -45,15 +50,19 @@ namespace Sim_Final_27
             tiempo = 0;
             evento = "Inicio";
             inicializarTabla();
-
+           
         }
 
 
         private void button1_Click(object sender, EventArgs e)
         {
+            mediaExponencial = Double.Parse(txtMediaLlegada.Text);
+            mediaNormal = double.Parse(txtMediaNormal.Text);
+            desvEstNormal = double.Parse(txtDesvEstNormal.Text);
+
             //Paso 0
             rndLlegadaReloj = randomGenerator.generarRandom();
-            demoraProxLlegada = randomGenerator.generarTiempoExponencial(rndLlegadaReloj);
+            demoraProxLlegada = randomGenerator.generarTiempoExponencial(rndLlegadaReloj, mediaExponencial);
             proxLlegada = tiempo + demoraProxLlegada;
             cola = 0;
             op1.estado = "Libre";
@@ -63,7 +72,7 @@ namespace Sim_Final_27
             string[] prox;
 
             //Empieza el for para el resto de los pasos
-            while(tiempo<Double.Parse(txtTiempo.Text))
+            while (tiempo < Double.Parse(txtTiempo.Text))
             {
                 prox = buscarProximoEvento(); //Devuelve vector de string, en 0 esta el nombre del evento, en 1 el tiempo
                 evento = prox[0];
@@ -89,8 +98,58 @@ namespace Sim_Final_27
                 imprimirFila(); //Imprime la fila en ambas tablas con la informacion correspondiente
 
             }
+            armarCargarTablaObjTemporales();
+            calcularTiempoMedioCola();
+            calcularTiempoMedioControl();
+            calcularPorcentajeUsoOperarios();
 
+        }
 
+        private void calcularPorcentajeUsoOperarios()
+        {
+            double porcentajeUsoOperario = Math.Round(op1.tiempoOcupado * 100 / tiempo, 4);
+            txtPorcentajeUsoOp1.Text = porcentajeUsoOperario + "%";
+            porcentajeUsoOperario = Math.Round(op2.tiempoOcupado * 100 / tiempo, 4);
+            txtPorcentajeUsoOp2.Text = porcentajeUsoOperario + "%";
+            porcentajeUsoOperario = Math.Round(op3.tiempoOcupado * 100 / tiempo, 4);
+            txtPorcentajeUsoOp3.Text = porcentajeUsoOperario + "%";
+        }
+
+        private void calcularTiempoMedioControl()
+        {
+            double acumuladorTiempoControl = 0;
+            double tiempoControlRelojActual = 0;
+            Reloj rel;
+            for (int i = 0; i < listaRelojes.Count; i++)
+            {
+                rel = listaRelojes.ElementAt<Reloj>(i);
+                tiempoControlRelojActual = rel.tiempoFinControl - rel.tiempoComienzoControl;
+                acumuladorTiempoControl += tiempoControlRelojActual;
+            }
+
+            double tiempoMedioControl = Math.Round(acumuladorTiempoControl / cantidadRelojesControlados, 4);
+            txtTiempoMedioControl.Text = tiempoMedioControl + " horas";
+
+        }
+
+        private void calcularTiempoMedioCola()
+        {
+            double acumuladorTiempoCola = 0;
+            double tiempoColaRelojActual = 0;
+            Reloj rel;
+            for (int i = 0; i < listaRelojes.Count; i++)
+            {
+                rel = listaRelojes.ElementAt<Reloj>(i);
+                if (rel.estado == "Ok")
+                {
+                    tiempoColaRelojActual = rel.tiempoComienzoControl - rel.tiempoEntrada;
+                    acumuladorTiempoCola += tiempoColaRelojActual;
+                }
+            }
+
+            double tiempoMedioCola = Math.Round(acumuladorTiempoCola / cantidadRelojesControlados, 4);
+
+            txtTiempoMedioCola.Text = tiempoMedioCola + " horas";
 
         }
 
@@ -107,9 +166,9 @@ namespace Sim_Final_27
             if (cola != 0)
             {
                 Reloj proxReloj = null;
-                for (int i =0; i<listaRelojes.Count; i++)
+                for (int i = 0; i < listaRelojes.Count; i++)
                 {
-                    if(listaRelojes.ElementAt<Reloj>(i).estado == "En cola")
+                    if (listaRelojes.ElementAt<Reloj>(i).estado == "En cola")
                     {
                         proxReloj = listaRelojes.ElementAt<Reloj>(i);
                         break;
@@ -162,7 +221,27 @@ namespace Sim_Final_27
             tablaSim.Rows.Add(fila);
 
             dgvTablaSimulacion.DataSource = tablaSim;
-    
+
+
+
+        }
+
+        private void armarCargarTablaObjTemporales()
+        {
+            //Armo las filas segun la cantidad de relojes que haya en la lista
+
+            Reloj rel;
+            for (int i = 0; i < listaRelojes.Count; i++)
+            {
+                DataRow row = tablaObjTemp.NewRow();
+                rel = listaRelojes.ElementAt<Reloj>(i);
+                row["Id Reloj"] = rel.id;
+                row["Tiempo Entrada"] = rel.tiempoEntrada;
+                row["Tiempo Inicio Control"] = rel.tiempoComienzoControl;
+                row["Tiempo Fin Control"] = rel.tiempoFinControl;
+                tablaObjTemp.Rows.Add(row);
+            }
+            dgvTablaObjTemporales.DataSource = tablaObjTemp;
         }
 
         private void pasoLlegadaReloj()
@@ -176,7 +255,7 @@ namespace Sim_Final_27
 
             //Cuando llegara el proximo?
             rndLlegadaReloj = randomGenerator.generarRandom();
-            demoraProxLlegada = randomGenerator.generarTiempoExponencial(rndLlegadaReloj);
+            demoraProxLlegada = randomGenerator.generarTiempoExponencial(rndLlegadaReloj, mediaExponencial);
             proxLlegada = tiempo + demoraProxLlegada;
 
             //Hay algun operario libre? Sino aumentamos la cola
@@ -198,7 +277,8 @@ namespace Sim_Final_27
                     if (op2.estado == "Libre")
                     {
                         inicioControl(relojNuevo, op2);
-                    }else
+                    }
+                    else
                     {
                         if (op3.estado == "Libre")
                         {
@@ -207,7 +287,7 @@ namespace Sim_Final_27
 
                     }
                 }
-                
+
             }
             else
             {
@@ -230,7 +310,7 @@ namespace Sim_Final_27
             rndControl1 = randomGenerator.generarRandom();
             rndControl2 = randomGenerator.generarRandom();
 
-            tiempoControl = randomGenerator.generarTiempoDistNormal(rndControl1, rndControl2);
+            tiempoControl = randomGenerator.generarTiempoDistNormal(rndControl1, rndControl2, mediaNormal, desvEstNormal);
 
             o.tiempoFinAtencion = tiempo + tiempoControl;
 
@@ -323,6 +403,11 @@ namespace Sim_Final_27
             tablaSim.Columns.Add("Tiempo Control Acum");
             tablaSim.Columns.Add("Cantidad Reloj Controlados");
 
+            tablaObjTemp = new DataTable();
+            tablaObjTemp.Columns.Add("Id Reloj");
+            tablaObjTemp.Columns.Add("Tiempo Entrada");
+            tablaObjTemp.Columns.Add("Tiempo Inicio Control");
+            tablaObjTemp.Columns.Add("Tiempo Fin Control");
 
         }
 
