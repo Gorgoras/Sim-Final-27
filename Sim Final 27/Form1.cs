@@ -102,7 +102,41 @@ namespace Sim_Final_27
             calcularTiempoMedioCola();
             calcularTiempoMedioControl();
             calcularPorcentajeUsoOperarios();
+            pintarFilas();
 
+
+        }
+
+        private void pintarFilas()
+        {
+            
+            foreach (DataGridViewRow dgvr in dgvTablaSimulacion.Rows)
+            {
+                if (dgvr.Cells[0].Value != null)
+                {
+                    if (dgvr.Cells[0].Value.ToString() == "Inicio")
+                    {
+                        dgvr.DefaultCellStyle.BackColor = Color.LightYellow;
+                    }
+                    if (dgvr.Cells[0].Value.ToString() == "Llegada reloj")
+                    {
+                        dgvr.DefaultCellStyle.BackColor = Color.LightBlue;
+
+                    }
+                    if (dgvr.Cells[0].Value.ToString() == "Fin Atencion Op 1")
+                    {
+                        dgvr.DefaultCellStyle.BackColor = Color.LightGreen;
+                    }
+                    if (dgvr.Cells[0].Value.ToString() == "Fin Atencion Op 2")
+                    {
+                        dgvr.DefaultCellStyle.BackColor = Color.LightGreen;
+                    }
+                    if (dgvr.Cells[0].Value.ToString() == "Fin Atencion Op 3")
+                    {
+                        dgvr.DefaultCellStyle.BackColor = Color.LightGreen;
+                    }
+                }
+            }
         }
 
         private void calcularPorcentajeUsoOperarios()
@@ -218,10 +252,12 @@ namespace Sim_Final_27
             fila["Tiempo Control Acum"] = tiempoTotalControl;
             fila["Cantidad Reloj Controlados"] = cantidadRelojesControlados;
 
+            
+
             tablaSim.Rows.Add(fila);
 
             dgvTablaSimulacion.DataSource = tablaSim;
-
+            
 
 
         }
@@ -420,6 +456,8 @@ namespace Sim_Final_27
             tiempo = 0;
             evento = "Inicio";
             inicializarTabla();
+            idReloj = 0;
+            cantidadRelojesControlados = 0;
         }
     }
 }
